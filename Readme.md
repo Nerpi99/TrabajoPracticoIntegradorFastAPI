@@ -75,7 +75,7 @@ fastapi_backend-main/
 │   │           ├── schemas.py       # Modelos Pydantic + ProductoStockResponse
 │   │           └── services.py      # Lógica de negocio + alerta de stock
 │   └── tests/
-│       └── test_api.http            # 13 casos de prueba (VS Code REST Client)
+│       └── test_api.http            # 17 casos de prueba (VS Code REST Client)
 │
 ├── u_01/                            # Ejercicios progresivos
 │   ├── u1_ej1/                      # GET básico, respuestas JSON
@@ -140,11 +140,22 @@ Para un análisis completo con diagramas de flujo de requests, grafo de dependen
 | Método | Endpoint                         | Status | Descripción            |
 |--------|----------------------------------|--------|------------------------|
 | POST   | `/productos/`                    | 201    | Crear producto         |
-| GET    | `/productos/`                    | 200    | Listar con paginación  |
+| GET    | `/productos/`                    | 200    | Listar con paginación y filtros (`nombre`, `precio_min`) |
 | GET    | `/productos/{id}`                | 200    | Detalle por ID         |
 | PUT    | `/productos/{id}`                | 200    | Reemplazo total        |
 | PUT    | `/productos/{id}/desactivar`     | 200    | Borrado lógico         |
 | GET    | `/productos/{id}/stock`          | 200    | Estado de stock        |
+
+### Clientes
+
+| Método | Endpoint                         | Status | Descripción            |
+|--------|----------------------------------|--------|------------------------|
+| POST   | `/clientes/`                     | 201    | Crear cliente (Valida CUIT único) |
+| GET    | `/clientes/`                     | 200    | Listar con paginación y filtro `nombre` |
+| GET    | `/clientes/{id}`                 | 200    | Detalle por ID         |
+| PUT    | `/clientes/{id}`                 | 200    | Reemplazo total        |
+| PUT    | `/clientes/{id}/desactivar`      | 200    | Borrado lógico         |
+| POST   | `/clientes/{id}/beneficio-premium`| 200/422| Regla de negocio (10% descuento) |
 
 ### Paginación
 
@@ -177,6 +188,27 @@ GET /productos/?skip=0&limit=5
 | codigo      | string | Regex: `^[A-Z]{3}-\d{2}$`         |
 | descripcion | string | Mínimo 3 caracteres                |
 | activo      | bool   | Opcional, default: `true`          |
+
+### Cliente
+
+```json
+{
+  "id": 1,
+  "nombre": "Juan Perez",
+  "email": "juan@example.com",
+  "cuit": "20-12345678-9",
+  "saldo": 15000.0,
+  "activo": true
+}
+```
+
+| Campo  | Tipo   | Validación                         |
+|--------|--------|------------------------------------|
+| nombre | string | Mínimo 2 caracteres                |
+| email  | string | Formato de email válido (`EmailStr`) |
+| cuit   | string | Regex: `^\d{2}-\d{8}-\d{1}$`       |
+| saldo  | float  | Mayor o igual a 0                  |
+| activo | bool   | Opcional, default: `true`          |
 
 ### Producto
 
@@ -340,7 +372,7 @@ Los tests están en formato `.http` (compatible con la extensión [REST Client](
 u1_ej_8_integrador/tests/test_api.http
 ```
 
-Incluye 13 casos de prueba que cubren:
+Incluye 17 casos de prueba que cubren:
 
 1. Listar categorías
 2. Crear categoría
@@ -348,13 +380,17 @@ Incluye 13 casos de prueba que cubren:
 4. Actualizar categoría (reemplazo total)
 5. Desactivar categoría
 6. Crear producto
-7. Listar productos con paginación
+7. Listar productos con paginación y filtros
 8. Detalle de producto
 9. Actualizar producto
 10. Consultar alerta de stock
 11. Desactivar producto
 12. Producto inexistente (404)
 13. Producto inválido (422)
+14. Crear cliente exitoso
+15. Crear cliente con CUIT/Email inválido (422 Pydantic)
+16. Listar clientes (con filtro por nombre)
+17. Aplicar beneficio Premium (Regla de negocio 200/422)
 
 Para ejecutarlos: abrir el archivo en VS Code con REST Client instalado y hacer click en "Send Request" sobre cada bloque.
 
