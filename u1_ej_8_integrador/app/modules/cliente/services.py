@@ -23,6 +23,13 @@ def obtener_por_id(id: int) -> Optional[ClienteRead]:
             return c
     return None
 
+def obtener_por_cuit(cuit: str) -> Optional[ClienteRead]:
+    """Busca si ya existe un cliente con el mismo CUIT."""
+    for c in db_clientes:
+        if c.cuit == cuit:
+            return c
+    return None
+
 def actualizar_total(id: int, data: ClienteCreate) -> Optional[ClienteRead]:
     for index, c in enumerate(db_clientes):
         if c.id == id:

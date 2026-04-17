@@ -6,6 +6,13 @@ router = APIRouter(prefix="/clientes", tags=["Clientes"])
 
 @router.post("/", response_model=schemas.ClienteRead, status_code=status.HTTP_201_CREATED)
 def alta_cliente(cliente: schemas.ClienteCreate):
+    # Regla de negocio: No pueden existir dos clientes con el mismo CUIT
+    existente = services.obtener_por_cuit(cliente.cuit)
+    if existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Ya existe un cliente registrado con ese CUIT"
+        )
     return services.crear(cliente)
 
 @router.get("/", response_model=List[schemas.ClienteRead], status_code=status.HTTP_200_OK)
@@ -43,4 +50,12 @@ def aplicar_beneficio_premium(id: int = Path(..., gt=0)):
     resultado = services.verificar_y_aplicar_beneficio_premium(id)
     if not resultado:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
+    
+    # Lanzamiento manual de error 422 si no cumple la regla de negocio
+    if not resultado["es_premium"]:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, 
+            detail="Regla de negocio no satisfecha: El cliente no tiene saldo suficiente para ser Premium"
+        )
+        
     return resultado
